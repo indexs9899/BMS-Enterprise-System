@@ -4,100 +4,286 @@
     <base target="_top">
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
     <meta name="theme-color" content="#4F46E5">
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BMS System">
 
-    <link rel="icon" type="image/jpeg" href="logo.jpg">
-    <link rel="apple-touch-icon" href="logo.jpg">
+    <link rel="icon" type="image/jpeg" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
 
     <title>BMS Enterprise System</title>
     
     <style>
+        /* =========================================
+           1. RESET & BASE STYLE
+        ========================================= */
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100dvh; 
-            overflow: hidden; background-color: #f3f4f6; font-family: sans-serif;
+            overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overscroll-behavior-y: none; /* ล็อกการปัดหน้าจอลงเพื่อรีเฟรช */
+            background-color: #ffffff;
         }
         
         iframe {
             width: 100%; height: 100%; border: none; display: block;
-            opacity: 0; 
-            transition: opacity 0.5s ease-in-out; 
+            opacity: 0; transform: scale(0.95); 
+            transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1); 
+            z-index: 10;
+            position: relative;
         }
 
+        /* =========================================
+           2. LOADER: GLASSMORPHISM + ANIMATED GRADIENT
+        ========================================= */
         #loader-container {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            background-color: #f3f4f6;
-            z-index: 10;
-            transition: opacity 0.5s ease-in-out;
+            /* พื้นหลังไล่สีแบบโปร่งแสง เพื่อให้เอฟเฟกต์เบลอทำงาน */
+            background: linear-gradient(-45deg, rgba(243,244,246,0.85), rgba(229,231,235,0.85), rgba(255,255,255,0.85), rgba(224,231,255,0.85));
+            background-size: 400% 400%;
+            animation: gradientBG 8s ease infinite;
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            z-index: 20;
+            transition: opacity 0.6s ease, visibility 0.6s;
         }
 
-        /* 🌟 สไตล์สำหรับโลโก้แอป */
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
         .app-logo {
-            width: 130px; /* ขนาดโลโก้กำลังพอดีบนมือถือ */
-            height: auto;
-            border-radius: 28px; /* ทำมุมโค้งมนสไตล์แอป iOS */
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15); /* เพิ่มมิติด้วยเงา */
-            margin-bottom: 24px;
-            animation: pulse 2s infinite ease-in-out; /* อนิเมชันขยับเบาๆ */
+            width: 115px; height: auto; border-radius: 25px;
+            box-shadow: 0 20px 40px rgba(79, 70, 229, 0.25);
+            margin-bottom: 35px;
+            animation: float 4s ease-in-out infinite; 
         }
 
-        .spinner {
-            width: 36px; height: 36px; border: 4px solid #e5e7eb;
-            border-top: 4px solid #4F46E5; border-radius: 50%;
-            animation: spin 1s linear infinite; margin-bottom: 12px;
+        @keyframes float { 
+            0% { transform: translateY(0px); } 
+            50% { transform: translateY(-12px); box-shadow: 0 25px 50px rgba(79, 70, 229, 0.15); } 
+            100% { transform: translateY(0px); } 
+        }
+
+        /* =========================================
+           3. PROGRESS BAR & TEXT
+        ========================================= */
+        .progress-wrapper {
+            width: 220px; background-color: rgba(0,0,0,0.06); border-radius: 20px;
+            height: 6px; overflow: hidden; margin-bottom: 20px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .progress-bar {
+            height: 100%; width: 0%; 
+            background: linear-gradient(90deg, #4F46E5, #3b82f6, #60a5fa);
+            border-radius: 20px; transition: width 0.3s ease;
         }
         
-        .loading-text { 
-            color: #4b5563; font-size: 15px; font-weight: 500; transition: color 0.3s; 
+        .loading-text { color: #475569; font-size: 14px; font-weight: 600; letter-spacing: 0.5px; }
+
+        /* =========================================
+           4. FOOTER & BUTTONS
+        ========================================= */
+        .footer-badge {
+            position: absolute; bottom: 30px;
+            font-size: 11px; color: #64748b; font-weight: 500;
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            opacity: 0.8;
         }
 
-        /* คีย์เฟรมสำหรับอนิเมชัน */
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes pulse { 
-            0% { transform: scale(1); } 
-            50% { transform: scale(1.05); } 
-            100% { transform: scale(1); } 
+        #retry-btn {
+            margin-top: 15px; padding: 10px 24px; border-radius: 30px;
+            background-color: #4F46E5; color: white; border: none; font-weight: bold;
+            font-size: 14px; cursor: pointer; display: none;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3); transition: transform 0.2s;
+        }
+        #retry-btn:active { transform: scale(0.95); }
+
+        #fab-refresh {
+            position: fixed; bottom: 25px; right: 25px;
+            width: 48px; height: 48px; border-radius: 50%;
+            background-color: white; color: #4F46E5;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            display: flex; justify-content: center; align-items: center;
+            font-size: 22px; cursor: pointer; z-index: 15;
+            border: 1px solid #e5e7eb; transition: transform 0.3s, opacity 0.3s;
+            opacity: 0.5;
+        }
+        #fab-refresh:hover, #fab-refresh:active { opacity: 1; transform: rotate(90deg) scale(1.1); }
+
+        /* =========================================
+           5. NETWORK OFFLINE TOAST (แจ้งเตือนเน็ตหลุด)
+        ========================================= */
+        #network-toast {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            background-color: #ef4444; color: white; padding: 12px 24px;
+            border-radius: 30px; font-size: 14px; font-weight: bold;
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+            z-index: 100; transition: top 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            display: flex; align-items: center; gap: 8px; white-space: nowrap;
+        }
+        #network-toast.show { top: 40px; }
+        #network-toast.online { background-color: #10b981; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3); }
+
+        /* =========================================
+           6. AUTO DARK MODE SUPPORT
+        ========================================= */
+        @media (prefers-color-scheme: dark) {
+            body, html { background-color: #0f172a; }
+            #loader-container { 
+                background: linear-gradient(-45deg, rgba(15,23,42,0.85), rgba(30,41,59,0.85), rgba(15,23,42,0.85), rgba(51,65,85,0.85)); 
+            }
+            .loading-text { color: #cbd5e1; }
+            .progress-wrapper { background-color: rgba(255,255,255,0.1); }
+            .footer-badge { color: #94a3b8; }
+            #fab-refresh { background-color: #1e293b; color: #cbd5e1; border-color: #334155; }
         }
     </style>
 </head>
 <body>
 
+    <div id="network-toast">
+        <span id="toast-icon">⚠️</span> <span id="toast-msg">ขาดการเชื่อมต่ออินเทอร์เน็ต</span>
+    </div>
+
     <div id="loader-container">
-        <img src="logo.png" alt="BMS Logo" class="app-logo">
-        <div class="spinner"></div>
-        <div class="loading-text" id="loading-msg">กำลังเชื่อมต่อระบบ BMS...</div>
+        <img src="logo.png" alt="BMS Logo" class="app-logo" onerror="this.style.display='none'">
+        
+        <div class="progress-wrapper">
+            <div class="progress-bar" id="p-bar"></div>
+        </div>
+        
+        <div class="loading-text" id="loading-msg">กำลังเริ่มต้นระบบ (0%)</div>
+        
+        <button id="retry-btn" onclick="reloadApp()">🔄 ลองใหม่อีกครั้ง</button>
+
+        <div class="footer-badge">
+            <span>🔒 Secured connection by Google</span>
+            <span>BMS Enterprise System • v5.2</span>
+        </div>
     </div>
 
     <iframe 
         src="https://script.google.com/macros/s/AKfycbwkAEHtXKfWjkV0I873RynWYNgOzKls9_7B8zW7XD0Ok36TvGhFljmpaShB6uG6uzjN6A/exec" 
         allowfullscreen
-        onload="hideLoader()">
+        id="app-frame">
     </iframe>
 
+    <div id="fab-refresh" onclick="reloadApp()" title="รีเฟรชหน้าจอ">
+        ⟳
+    </div>
+
     <script>
-        function hideLoader() {
-            // เมื่อหน้าเว็บโหลดเสร็จ ให้ซ่อน Loading สวยๆ
-            document.getElementById('loader-container').style.opacity = '0';
-            document.querySelector('iframe').style.opacity = '1';
-            setTimeout(() => {
-                document.getElementById('loader-container').style.display = 'none';
-            }, 500); 
+        // ==========================================
+        // JS CONTROLLER: ควบคุมลอจิกทั้งหมด
+        // ==========================================
+        let progress = 0;
+        let isLoaded = false;
+        let loadingInterval;
+        let timeoutTimer;
+
+        const pBar = document.getElementById('p-bar');
+        const lMsg = document.getElementById('loading-msg');
+        const retryBtn = document.getElementById('retry-btn');
+        const iframe = document.getElementById('app-frame');
+        const loader = document.getElementById('loader-container');
+
+        // 1. ฟังก์ชันเริ่มโหลดกระบวนการ (เรียกใช้ตอนเปิดเว็บ และตอนกดรีเฟรช)
+        function startLoadingProcess() {
+            progress = 0;
+            isLoaded = false;
+            pBar.style.width = '0%';
+            lMsg.innerText = "กำลังเริ่มต้นระบบ (0%)";
+            retryBtn.style.display = "none";
+
+            // เริ่มวิ่ง Progress Bar (สุ่มวิ่งเพื่อให้ดูสมจริง)
+            loadingInterval = setInterval(() => {
+                if(isLoaded) return;
+                progress += Math.floor(Math.random() * 10) + 2;
+                if (progress >= 88) progress = 88; // วิ่งไปรอที่ 88%
+                
+                pBar.style.width = progress + '%';
+                lMsg.innerText = `กำลังเชื่อมต่อฐานข้อมูล... (${progress}%)`;
+            }, 350);
+
+            // ระบบจับเวลา: ถ้านานเกิน 12 วินาทีให้โชว์ปุ่มลองใหม่
+            timeoutTimer = setTimeout(() => {
+                if (!isLoaded) {
+                    lMsg.innerText = "การเชื่อมต่อใช้เวลานานกว่าปกติ...";
+                    retryBtn.style.display = "block";
+                }
+            }, 12000);
         }
 
-        // แจ้งเตือนถ้าระบบโหลดนานกว่า 3 วินาที
-        setTimeout(() => {
-            const msg = document.getElementById('loading-msg');
-            const loader = document.getElementById('loader-container');
-            if(loader.style.display !== 'none' && loader.style.opacity !== '0') {
-                msg.innerText = "กำลังซิงค์ฐานข้อมูล อาจใช้เวลาสักครู่...";
-            }
-        }, 3000);
+        // 2. Event เมื่อ Iframe โหลดเสร็จ 100%
+        iframe.onload = function() {
+            isLoaded = true;
+            clearInterval(loadingInterval);
+            clearTimeout(timeoutTimer);
+            
+            progress = 100;
+            pBar.style.width = '100%';
+            lMsg.innerText = "โหลดสมบูรณ์! (100%)";
+            
+            // รอ 0.5 วิแล้วเปิดม่านโชว์แอป
+            setTimeout(() => {
+                loader.style.opacity = '0';
+                loader.style.visibility = 'hidden';
+                
+                // เฟดและซูม Iframe เข้ามา
+                this.style.opacity = '1';
+                this.style.transform = 'scale(1)';
+            }, 500);
+        };
+
+        // 3. ฟังก์ชันรีเฟรชระบบ (ผูกกับปุ่ม ลองใหม่ และ ปุ่มลอย)
+        function reloadApp() {
+            clearInterval(loadingInterval);
+            clearTimeout(timeoutTimer);
+            
+            // ดึงหน้า Loading กลับมาบังจอ
+            loader.style.visibility = 'visible';
+            loader.style.opacity = '1';
+            
+            // ย่อและซ่อน Iframe
+            iframe.style.opacity = '0';
+            iframe.style.transform = 'scale(0.95)';
+            
+            // สั่ง Iframe โหลดลิงก์เดิมใหม่
+            iframe.src = iframe.src; 
+            
+            // เริ่ม Animation โหลดใหม่
+            startLoadingProcess();
+        }
+
+        // 4. ระบบตรวจจับอินเทอร์เน็ต (Network Listener)
+        const toast = document.getElementById('network-toast');
+        const toastMsg = document.getElementById('toast-msg');
+        const toastIcon = document.getElementById('toast-icon');
+
+        window.addEventListener('offline', () => {
+            toast.className = 'show'; // โชว์สีแดง
+            toastIcon.innerText = '⚠️';
+            toastMsg.innerText = 'ขาดการเชื่อมต่ออินเทอร์เน็ต';
+        });
+
+        window.addEventListener('online', () => {
+            toast.className = 'show online'; // เปลี่ยนเป็นสีเขียว
+            toastIcon.innerText = '✅';
+            toastMsg.innerText = 'กลับมาออนไลน์แล้ว';
+            
+            // ซ่อนแจ้งเตือนหลังจากผ่านไป 3 วินาที
+            setTimeout(() => {
+                toast.className = toast.className.replace('show', '').trim();
+            }, 3000);
+        });
+
+        // เริ่มต้นการทำงานทันทีที่เปิดหน้าเว็บ
+        startLoadingProcess();
     </script>
 </body>
 </html>
