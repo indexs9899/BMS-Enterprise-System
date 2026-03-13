@@ -4,10 +4,72 @@
     <base target="_top">
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BMS System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>BMS Enterprise System</title>
+    
+    <style>
+        /* 1. ลบขอบขาวเริ่มต้นของเบราว์เซอร์ */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            /* 2. ใช้ 100dvh (Dynamic Viewport) แก้ปัญหาแถบเบราว์เซอร์มือถือบังปุ่มด้านล่าง */
+            height: 100dvh; 
+            overflow: hidden; /* ป้องกันการเกิด Scrollbar ซ้อนกัน 2 ชั้น */
+            background-color: #f3f4f6; /* สีพื้นหลังระหว่างรอโหลด */
+            font-family: sans-serif;
+        }
+
+        /* 3. จัดการ iframe ให้เต็ม 100% แบบไร้รอยต่อ */
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* 4. สร้างหน้าจอ Loading รอระหว่างที่ GAS กำลังประมวลผล (ลดอาการหน้าขาว) */
+        #loader-container {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1; /* ซ่อนไว้หลัง iframe */
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid #4F46E5; /* สีน้ำเงินเข้ากับระบบ BMS */
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 12px;
+        }
+        .loading-text {
+            color: #6b7280;
+            font-size: 14px;
+        }
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }
+    </style>
 </head>
 <body>
-    <iframe style="width: 100%; height: 100vh;" scrolling="yes" src="https://script.google.com/macros/s/AKfycbwkAEHtXKfWjkV0I873RynWYNgOzKls9_7B8zW7XD0Ok36TvGhFljmpaShB6uG6uzjN6A/exec" frameborder="0"></iframe>
+
+    <div id="loader-container">
+        <div class="spinner"></div>
+        <div class="loading-text">กำลังโหลดระบบ BMS...</div>
+    </div>
+
+    <iframe 
+        src="https://script.google.com/macros/s/AKfycbwkAEHtXKfWjkV0I873RynWYNgOzKls9_7B8zW7XD0Ok36TvGhFljmpaShB6uG6uzjN6A/exec" 
+        allowfullscreen>
+    </iframe>
+
 </body>
 </html>
