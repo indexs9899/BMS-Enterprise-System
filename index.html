@@ -5,71 +5,99 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    
+    <meta name="theme-color" content="#4F46E5">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BMS System">
+
+    <link rel="icon" type="image/jpeg" href="logo.jpg">
+    <link rel="apple-touch-icon" href="logo.jpg">
+
     <title>BMS Enterprise System</title>
     
     <style>
-        /* 1. ลบขอบขาวเริ่มต้นของเบราว์เซอร์ */
         body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            /* 2. ใช้ 100dvh (Dynamic Viewport) แก้ปัญหาแถบเบราว์เซอร์มือถือบังปุ่มด้านล่าง */
-            height: 100dvh; 
-            overflow: hidden; /* ป้องกันการเกิด Scrollbar ซ้อนกัน 2 ชั้น */
-            background-color: #f3f4f6; /* สีพื้นหลังระหว่างรอโหลด */
-            font-family: sans-serif;
+            margin: 0; padding: 0; width: 100%; height: 100dvh; 
+            overflow: hidden; background-color: #f3f4f6; font-family: sans-serif;
         }
-
-        /* 3. จัดการ iframe ให้เต็ม 100% แบบไร้รอยต่อ */
+        
         iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            display: block;
-            position: relative;
-            z-index: 10;
+            width: 100%; height: 100%; border: none; display: block;
+            opacity: 0; 
+            transition: opacity 0.5s ease-in-out; 
         }
 
-        /* 4. สร้างหน้าจอ Loading รอระหว่างที่ GAS กำลังประมวลผล (ลดอาการหน้าขาว) */
         #loader-container {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1; /* ซ่อนไว้หลัง iframe */
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background-color: #f3f4f6;
+            z-index: 10;
+            transition: opacity 0.5s ease-in-out;
         }
+
+        /* 🌟 สไตล์สำหรับโลโก้แอป */
+        .app-logo {
+            width: 130px; /* ขนาดโลโก้กำลังพอดีบนมือถือ */
+            height: auto;
+            border-radius: 28px; /* ทำมุมโค้งมนสไตล์แอป iOS */
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15); /* เพิ่มมิติด้วยเงา */
+            margin-bottom: 24px;
+            animation: pulse 2s infinite ease-in-out; /* อนิเมชันขยับเบาๆ */
+        }
+
         .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #e5e7eb;
-            border-top: 4px solid #4F46E5; /* สีน้ำเงินเข้ากับระบบ BMS */
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 12px;
+            width: 36px; height: 36px; border: 4px solid #e5e7eb;
+            border-top: 4px solid #4F46E5; border-radius: 50%;
+            animation: spin 1s linear infinite; margin-bottom: 12px;
         }
-        .loading-text {
-            color: #6b7280;
-            font-size: 14px;
+        
+        .loading-text { 
+            color: #4b5563; font-size: 15px; font-weight: 500; transition: color 0.3s; 
         }
-        @keyframes spin { 
-            0% { transform: rotate(0deg); } 
-            100% { transform: rotate(360deg); } 
+
+        /* คีย์เฟรมสำหรับอนิเมชัน */
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes pulse { 
+            0% { transform: scale(1); } 
+            50% { transform: scale(1.05); } 
+            100% { transform: scale(1); } 
         }
     </style>
 </head>
 <body>
 
     <div id="loader-container">
+        <img src="logo.png" alt="BMS Logo" class="app-logo">
         <div class="spinner"></div>
-        <div class="loading-text">กำลังโหลดระบบ BMS...</div>
+        <div class="loading-text" id="loading-msg">กำลังเชื่อมต่อระบบ BMS...</div>
     </div>
 
     <iframe 
         src="https://script.google.com/macros/s/AKfycbwkAEHtXKfWjkV0I873RynWYNgOzKls9_7B8zW7XD0Ok36TvGhFljmpaShB6uG6uzjN6A/exec" 
-        allowfullscreen>
+        allowfullscreen
+        onload="hideLoader()">
     </iframe>
 
+    <script>
+        function hideLoader() {
+            // เมื่อหน้าเว็บโหลดเสร็จ ให้ซ่อน Loading สวยๆ
+            document.getElementById('loader-container').style.opacity = '0';
+            document.querySelector('iframe').style.opacity = '1';
+            setTimeout(() => {
+                document.getElementById('loader-container').style.display = 'none';
+            }, 500); 
+        }
+
+        // แจ้งเตือนถ้าระบบโหลดนานกว่า 3 วินาที
+        setTimeout(() => {
+            const msg = document.getElementById('loading-msg');
+            const loader = document.getElementById('loader-container');
+            if(loader.style.display !== 'none' && loader.style.opacity !== '0') {
+                msg.innerText = "กำลังซิงค์ฐานข้อมูล อาจใช้เวลาสักครู่...";
+            }
+        }, 3000);
+    </script>
 </body>
 </html>
