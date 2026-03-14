@@ -23,7 +23,7 @@
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100dvh; 
             overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overscroll-behavior-y: none; /* ล็อกการปัดหน้าจอลงเพื่อรีเฟรช */
+            overscroll-behavior-y: none;
             background-color: #ffffff;
         }
         
@@ -41,7 +41,6 @@
         #loader-container {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            /* พื้นหลังไล่สีแบบโปร่งแสง เพื่อให้เอฟเฟกต์เบลอทำงาน */
             background: linear-gradient(-45deg, rgba(243,244,246,0.85), rgba(229,231,235,0.85), rgba(255,255,255,0.85), rgba(224,231,255,0.85));
             background-size: 400% 400%;
             animation: gradientBG 8s ease infinite;
@@ -59,7 +58,7 @@
         .app-logo {
             width: 115px; height: auto; border-radius: 25px;
             box-shadow: 0 20px 40px rgba(79, 70, 229, 0.25);
-            margin-bottom: 35px;
+            margin-bottom: 25px;
             animation: float 4s ease-in-out infinite; 
         }
 
@@ -70,11 +69,37 @@
         }
 
         /* =========================================
+           🌟 NEW: DUAL RING SPINNER 
+        ========================================= */
+        .spinner-ring {
+            width: 40px; height: 40px;
+            border: 3px solid transparent;
+            border-top-color: #4F46E5;
+            border-bottom-color: #4F46E5;
+            border-radius: 50%;
+            animation: spin-outer 1.2s linear infinite;
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .spinner-ring::before {
+            content: '';
+            position: absolute;
+            top: 4px; left: 4px; right: 4px; bottom: 4px;
+            border: 3px solid transparent;
+            border-left-color: #3B82F6;
+            border-right-color: #3B82F6;
+            border-radius: 50%;
+            animation: spin-inner 0.6s linear infinite reverse;
+        }
+        @keyframes spin-outer { 100% { transform: rotate(360deg); } }
+        @keyframes spin-inner { 100% { transform: rotate(360deg); } }
+
+        /* =========================================
            3. PROGRESS BAR & TEXT
         ========================================= */
         .progress-wrapper {
             width: 220px; background-color: rgba(0,0,0,0.06); border-radius: 20px;
-            height: 6px; overflow: hidden; margin-bottom: 20px;
+            height: 6px; overflow: hidden; margin-bottom: 15px;
             box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
         }
         .progress-bar {
@@ -116,7 +141,7 @@
         #fab-refresh:hover, #fab-refresh:active { opacity: 1; transform: rotate(90deg) scale(1.1); }
 
         /* =========================================
-           5. NETWORK OFFLINE TOAST (แจ้งเตือนเน็ตหลุด)
+           5. NETWORK OFFLINE TOAST 
         ========================================= */
         #network-toast {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
@@ -153,6 +178,8 @@
     <div id="loader-container">
         <img src="logo.png" alt="BMS Logo" class="app-logo" onerror="this.style.display='none'">
         
+        <div class="spinner-ring"></div>
+        
         <div class="progress-wrapper">
             <div class="progress-bar" id="p-bar"></div>
         </div>
@@ -179,7 +206,7 @@
 
     <script>
         // ==========================================
-        // JS CONTROLLER: ควบคุมลอจิกทั้งหมด
+        // JS CONTROLLER
         // ==========================================
         let progress = 0;
         let isLoaded = false;
@@ -192,7 +219,6 @@
         const iframe = document.getElementById('app-frame');
         const loader = document.getElementById('loader-container');
 
-        // 1. ฟังก์ชันเริ่มโหลดกระบวนการ (เรียกใช้ตอนเปิดเว็บ และตอนกดรีเฟรช)
         function startLoadingProcess() {
             progress = 0;
             isLoaded = false;
@@ -200,17 +226,15 @@
             lMsg.innerText = "กำลังเริ่มต้นระบบ (0%)";
             retryBtn.style.display = "none";
 
-            // เริ่มวิ่ง Progress Bar (สุ่มวิ่งเพื่อให้ดูสมจริง)
             loadingInterval = setInterval(() => {
                 if(isLoaded) return;
                 progress += Math.floor(Math.random() * 10) + 2;
-                if (progress >= 88) progress = 88; // วิ่งไปรอที่ 88%
+                if (progress >= 88) progress = 88;
                 
                 pBar.style.width = progress + '%';
                 lMsg.innerText = `กำลังเชื่อมต่อฐานข้อมูล... (${progress}%)`;
             }, 350);
 
-            // ระบบจับเวลา: ถ้านานเกิน 12 วินาทีให้โชว์ปุ่มลองใหม่
             timeoutTimer = setTimeout(() => {
                 if (!isLoaded) {
                     lMsg.innerText = "การเชื่อมต่อใช้เวลานานกว่าปกติ...";
@@ -219,7 +243,6 @@
             }, 12000);
         }
 
-        // 2. Event เมื่อ Iframe โหลดเสร็จ 100%
         iframe.onload = function() {
             isLoaded = true;
             clearInterval(loadingInterval);
@@ -229,60 +252,50 @@
             pBar.style.width = '100%';
             lMsg.innerText = "โหลดสมบูรณ์! (100%)";
             
-            // รอ 0.5 วิแล้วเปิดม่านโชว์แอป
             setTimeout(() => {
                 loader.style.opacity = '0';
                 loader.style.visibility = 'hidden';
                 
-                // เฟดและซูม Iframe เข้ามา
                 this.style.opacity = '1';
                 this.style.transform = 'scale(1)';
             }, 500);
         };
 
-        // 3. ฟังก์ชันรีเฟรชระบบ (ผูกกับปุ่ม ลองใหม่ และ ปุ่มลอย)
         function reloadApp() {
             clearInterval(loadingInterval);
             clearTimeout(timeoutTimer);
             
-            // ดึงหน้า Loading กลับมาบังจอ
             loader.style.visibility = 'visible';
             loader.style.opacity = '1';
             
-            // ย่อและซ่อน Iframe
             iframe.style.opacity = '0';
             iframe.style.transform = 'scale(0.95)';
             
-            // สั่ง Iframe โหลดลิงก์เดิมใหม่
             iframe.src = iframe.src; 
             
-            // เริ่ม Animation โหลดใหม่
             startLoadingProcess();
         }
 
-        // 4. ระบบตรวจจับอินเทอร์เน็ต (Network Listener)
         const toast = document.getElementById('network-toast');
         const toastMsg = document.getElementById('toast-msg');
         const toastIcon = document.getElementById('toast-icon');
 
         window.addEventListener('offline', () => {
-            toast.className = 'show'; // โชว์สีแดง
+            toast.className = 'show';
             toastIcon.innerText = '⚠️';
             toastMsg.innerText = 'ขาดการเชื่อมต่ออินเทอร์เน็ต';
         });
 
         window.addEventListener('online', () => {
-            toast.className = 'show online'; // เปลี่ยนเป็นสีเขียว
+            toast.className = 'show online';
             toastIcon.innerText = '✅';
             toastMsg.innerText = 'กลับมาออนไลน์แล้ว';
             
-            // ซ่อนแจ้งเตือนหลังจากผ่านไป 3 วินาที
             setTimeout(() => {
                 toast.className = toast.className.replace('show', '').trim();
             }, 3000);
         });
 
-        // เริ่มต้นการทำงานทันทีที่เปิดหน้าเว็บ
         startLoadingProcess();
     </script>
 </body>
