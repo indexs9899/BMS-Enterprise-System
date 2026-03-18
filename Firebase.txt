@@ -1,0 +1,124 @@
+// ==========================================
+// 🔥 FIREBASE CONFIGURATION
+// ==========================================
+
+const FB_URL = "https://bms-system-2026-default-rtdb.asia-southeast1.firebasedatabase.app"; 
+const FB_SECRET = "J3b7hz6PPpukI5RU9ZpNHJR3j5t7ftucd1wYEal5"; 
+
+
+function getFbUrl(path) {
+  return `${FB_URL}/${path}.json?auth=${FB_SECRET}`;
+}
+
+// 1. ฟังก์ชัน Sync ข้อมูลทั้งหมดจาก Sheet -> Firebase (ใช้รันครั้งแรก หรือเมื่อข้อมูลเพี้ยน)
+function syncAllBookingsToFirebase() {
+  const db = getDb();
+  const data = db.bookingsSheet.getDataRange().getValues();
+  const users = db.usersSheet.getDataRange().getValues();
+  
+  let payload = {};
+  
+  // เริ่มที่ i=1 เพื่อข้าม Header
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    const id = String(row[0]);
+    if (!id) continue;
+
+    // หาชื่อคนจอง
+    const userId = String(row[1]);
+    const userRow = users.find(u => String(u[0]) === userId);
+    const bookerName = userRow ? (userRow[4] || userRow[1]) : userId;
+
+    // สร้างก้อนข้อมูล
+    payload[id] = {
+      id: id,
+      userId: userId,
+      bookerName: bookerName,
+      hotel: row[2],
+      checkIn: formatDateForFirebase(row[3]),
+      checkOut: formatDateForFirebase(row[4]),
+      status: row[5],
+      receiptUrl: row[6],
+      remark: row[7],
+      agent: row[8],
+      slipUrl: row[9],
+      price: row[10]
+    };
+  }
+
+  // ยิงข้อมูลไป Firebase (ทับของเก่าทั้งหมด)
+  try {
+    const response = UrlFetchApp.fetch(getFbUrl("bookings"), {
+      method: "PUT",
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
+    console.log("✅ Sync สำเร็จ! Response: " + response.getResponseCode());
+  } catch (e) {
+    console.error("❌ Sync Error: " + e.toString());
+  }
+}
+
+// 2. ฟังก์ชันอัปเดตรายการเดียว (ใช้แทรกตอนกดจอง/แก้ไข)
+function updateBookingToFirebase(bookingData) {
+  try {
+    // ต้องแปลงวันที่เป็น String ก่อนส่ง
+    if(bookingData.checkIn) bookingData.checkIn = formatDateForFirebase(bookingData.checkIn);
+    if(bookingData.checkOut) bookingData.checkOut = formatDateForFirebase(bookingData.checkOut);
+
+    const url = getFbUrl(`bookings/${bookingData.id}`);
+    UrlFetchApp.fetch(url, {
+      method: "PATCH", // ใช้ PATCH เพื่อแก้เฉพาะฟิลด์ที่ส่งไป (ไม่ทับหายทั้งก้อน)
+      payload: JSON.stringify(bookingData),
+      muteHttpExceptions: true
+    });
+    // console.log(`🔥 Firebase Updated ID: ${bookingData.id}`);
+  } catch (e) {
+    console.error("Firebase Update Error: " + e);
+  }
+}
+
+// 3. ฟังก์ชันดึงข้อมูลจาก Firebase (ใช้แทนการอ่าน Sheet)
+function getBookingsFromFirebase() {
+  try {
+    const response = UrlFetchApp.fetch(getFbUrl("bookings"));
+    const data = JSON.parse(response.getContentText());
+    
+    if (!data) return [];
+    
+    // แปลง Object { id1:{...}, id2:{...} } เป็น Array [ {...}, {...} ]
+    let list = Object.values(data);
+    
+    // เรียงลำดับ (ใหม่สุดขึ้นก่อน)
+    list.sort((a, b) => {
+        return new Date(b.checkIn) - new Date(a.checkIn);
+    });
+    
+    return list;
+  } catch (e) {
+    console.error("Firebase Read Error: " + e);
+    return []; // ถ้าพัง ให้คืนค่าว่าง
+  }
+}
+
+// 4. ฟังก์ชันลบข้อมูลออกจาก Firebase
+function deleteBookingFromFirebase(bookingId) {
+  try {
+    const url = getFbUrl(`bookings/${bookingId}`);
+    UrlFetchApp.fetch(url, {
+      method: "DELETE",
+      muteHttpExceptions: true
+    });
+  } catch (e) {
+    console.error("Firebase Delete Error: " + e);
+  }
+}
+
+// Helper: แปลงวันที่เป็น YYYY-MM-DD
+function formatDateForFirebase(dateObj) {
+  if (!dateObj) return "";
+  if (typeof dateObj === 'string') return dateObj.substring(0, 10);
+  try {
+    return Utilities.formatDate(new Date(dateObj), Session.getScriptTimeZone(), "yyyy-MM-dd");
+  } catch(e) { return ""; }
+}
