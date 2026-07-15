@@ -4,7 +4,7 @@
   <base target="_top">
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="theme-color" content="#0b1220">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -13,8 +13,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/png" href="https://i.ibb.co/n81Xscjc/Gemini-Generated-Image-fmvnykfmvnykfmvn.png">
-  <link rel="apple-touch-icon" href="https://i.ibb.co/n81Xscjc/Gemini-Generated-Image-fmvnykfmvnykfmvn.png">
+  <link rel="icon" type="image/png" href="https://i.ibb.co/YTd57khk/Gemini-Generated-Image-fmvnykfmvnykfmvn.png">
+  <link rel="apple-touch-icon" href="https://i.ibb.co/YTd57khk/Gemini-Generated-Image-fmvnykfmvnykfmvn.png">
 
   <title>BMS Enterprise System</title>
 
@@ -28,16 +28,19 @@
       --muted: #a8b3c7;
       --line: rgba(255, 255, 255, 0.12);
       --shadow: 0 32px 80px rgba(2, 6, 23, 0.42);
+      --app-height: 100dvh;
     }
 
     *, *::before, *::after { box-sizing: border-box; }
 
     html, body {
       width: 100%;
-      height: 100%;
-      height: 100dvh;
+      height: var(--app-height);
+      min-height: var(--app-height);
       margin: 0;
       overflow: hidden;
+      position: fixed;
+      inset: 0;
       background: var(--navy);
       font-family: "IBM Plex Sans Thai", "Segoe UI", sans-serif;
       -webkit-font-smoothing: antialiased;
@@ -47,11 +50,14 @@
     button { font: inherit; }
 
     #app-frame {
-      position: relative;
+      position: fixed;
+      inset: 0;
       z-index: 1;
       display: block;
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: var(--app-height);
+      min-width: 0;
+      max-width: none;
       border: 0;
       opacity: 0;
       transform: scale(0.985);
@@ -61,10 +67,12 @@
     #loader-container {
       position: fixed;
       inset: 0;
+      width: 100vw;
+      height: var(--app-height);
       z-index: 20;
       display: grid;
       place-items: center;
-      padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+      padding: max(18px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
       overflow: hidden;
       color: var(--white);
       background:
@@ -245,13 +253,23 @@
     #network-toast.online { background: rgba(5, 150, 105, .94); box-shadow: 0 16px 35px rgba(6, 78, 59, .25); }
 
     @media (max-width: 520px) {
-      .loader-card { padding: 26px 22px; border-radius: 24px; }
-      .brand-row { align-items: center; gap: 16px; margin-bottom: 28px; }
-      .logo-shell { width: 88px; height: 88px; border-radius: 23px; }
-      .app-logo { border-radius: 18px; }
-      h1 { font-size: 19px; }
-      .subtitle { font-size: 12px; }
+      .loader-card {
+        width: min(100%, 390px);
+        max-height: calc(var(--app-height) - max(36px, env(safe-area-inset-top)) - max(36px, env(safe-area-inset-bottom)));
+        padding: 24px 20px;
+        border-radius: 24px;
+        overflow-y: auto;
+      }
+      .brand-row { align-items: center; flex-direction: column; gap: 14px; margin-bottom: 24px; text-align: center; }
+      .logo-shell { width: 128px; height: 128px; border-radius: 28px; }
+      .app-logo { border-radius: 22px; }
+      h1 { display: none; }
+      .eyebrow { margin-top: 2px; font-size: 13px; }
+      .subtitle { max-width: 290px; margin-top: 6px; font-size: 12px; line-height: 1.55; }
       .card-footer { align-items: flex-start; flex-direction: column; gap: 8px; }
+      #app-frame { transform: none !important; }
+      #fab-refresh { right: max(14px, env(safe-area-inset-right)); bottom: max(14px, env(safe-area-inset-bottom)); width: 44px; height: 44px; border-radius: 14px; }
+      #network-toast { max-width: calc(100vw - 24px); white-space: normal; text-align: center; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -269,7 +287,7 @@
     <main class="loader-card" role="status" aria-live="polite">
       <div class="brand-row">
         <div class="logo-shell">
-          <img src="https://i.ibb.co/n81Xscjc/Gemini-Generated-Image-fmvnykfmvnykfmvn.png" alt="โลโก้ BMS" class="app-logo">
+          <img src="https://i.ibb.co/YTd57khk/Gemini-Generated-Image-fmvnykfmvnykfmvn.png" alt="โลโก้ BMS" class="app-logo">
         </div>
         <div>
           <p class="eyebrow">ฺBMS Platform</p>
@@ -329,6 +347,23 @@
     const toast = document.getElementById('network-toast');
     const toastMessage = document.getElementById('toast-msg');
     const toastIcon = document.getElementById('toast-icon');
+
+    let viewportFrame;
+
+    function syncViewportHeight() {
+      const viewportHeight = window.visualViewport?.height || window.innerHeight;
+      document.documentElement.style.setProperty('--app-height', `${Math.round(viewportHeight)}px`);
+    }
+
+    function scheduleViewportSync() {
+      cancelAnimationFrame(viewportFrame);
+      viewportFrame = requestAnimationFrame(syncViewportHeight);
+    }
+
+    syncViewportHeight();
+    window.addEventListener('resize', scheduleViewportSync, { passive: true });
+    window.addEventListener('orientationchange', () => setTimeout(syncViewportHeight, 120), { passive: true });
+    window.visualViewport?.addEventListener('resize', scheduleViewportSync, { passive: true });
 
     function setProgress(value, message) {
       progress = value;
